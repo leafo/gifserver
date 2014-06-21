@@ -10,6 +10,10 @@ import (
 )
 
 func checkSignature(r *http.Request) error {
+	if serverConfig.Secret == "" {
+		return nil
+	}
+
 	params := r.URL.Query()
 	sig := params.Get("sig")
 
@@ -26,7 +30,7 @@ func checkSignature(r *http.Request) error {
 		toCheck = toCheck + "?" + strippedQuery
 	}
 
-	mac := hmac.New(sha1.New, []byte("secret"))
+	mac := hmac.New(sha1.New, []byte(serverConfig.Secret))
 	mac.Write([]byte(toCheck))
 	expectedSig := base64.StdEncoding.EncodeToString(mac.Sum(nil))
 

@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-const maxBytes = 1024 * 1024 * 5 // 5mb
+var serverConfig *config
 
 var shared struct {
 	sync.Mutex
@@ -107,12 +107,12 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 	contentLengthStr := res.Header.Get("content-length")
 	if contentLengthStr != "" {
 		contentLength, err := strconv.Atoi(contentLengthStr)
-		if err != nil && contentLength > maxBytes {
-			return fmt.Errorf("Image is too large (%d > %d)", contentLength, maxBytes)
+		if err != nil && contentLength > serverConfig.MaxBytes {
+			return fmt.Errorf("Image is too large (%d > %d)", contentLength, serverConfig.MaxBytes)
 		}
 	}
 
-	gif, err := gif.DecodeAll(limitedReader(res.Body, maxBytes))
+	gif, err := gif.DecodeAll(limitedReader(res.Body, serverConfig.MaxBytes))
 
 	if err != nil {
 		return err
@@ -152,7 +152,8 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 	return err
 }
 
-func startServer(listenTo string) {
+func startServer(listenTo string, _config *config) {
+	serverConfig = _config
 	http.Handle("/transcode", basicHandler(transcodeHandler))
 	log.Print("Listening on ", listenTo)
 	http.ListenAndServe(listenTo, nil)

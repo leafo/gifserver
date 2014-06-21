@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"image/gif"
 	"image/png"
@@ -11,6 +12,19 @@ import (
 	"os/exec"
 	"path"
 )
+
+var (
+	configFname string
+)
+
+func init() {
+	flag.StringVar(&configFname, "config", defaultConfigFname, "Path to json config")
+
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: gifserver [OPTIONS]\n\nOptions:\n")
+		flag.PrintDefaults()
+	}
+}
 
 func loadGif(fname string) (*gif.GIF, error) {
 	file, err := os.Open(fname)
@@ -127,33 +141,8 @@ func copyFile(src, dest string) error {
 	return nil
 }
 
-func test() {
-	if len(os.Args) < 2 {
-		log.Fatal("Missing file")
-	}
-
-	gif, err := loadGif(os.Args[1])
-
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	dir, err := extractGif(gif)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	defer cleanDir(dir)
-	vid, err := convertToOGV(dir)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	if len(os.Args) > 2 {
-		copyFile(vid, os.Args[2])
-	}
-}
-
 func main() {
-	startServer(":9090")
+	flag.Parse()
+	config := loadConfig(configFname)
+	startServer(":9090", config)
 }
