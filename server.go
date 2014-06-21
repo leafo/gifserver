@@ -19,8 +19,11 @@ var shared struct {
 	processing map[string]bool
 }
 
+var cache *FileCache
+
 func init() {
 	shared.processing = make(map[string]bool)
+	cache = NewFileCache("gifcache")
 }
 
 func keyBusy(key string) bool {
@@ -91,12 +94,20 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	key := requestKey(url, "mp4")
-	if keyBusy(key) {
-		return fmt.Errorf("Key is busy")
-	}
 
 	lockKey(key)
 	defer unlockKey(key)
+
+	// see if cache has it
+	readCloser, err := cache.Get(key)
+
+	if err == nil {
+		log.Print("Hit cache for ", key)
+		w.Header().Add("Content-type", "video/mp4")
+		io.Copy(w, readCloser)
+		defer readCloser.Close()
+		return nil
+	}
 
 	res, err := http.Get(url)
 
@@ -141,8 +152,15 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	w.Header().Add("Content-type", "video/mp4")
-	io.Copy(w, file)
 
+	cacheWriter, err := cache.PutWriter(key)
+
+	if err != nil {
+		return err
+	}
+
+	teed := io.TeeReader(file, cacheWriter)
+	io.Copy(w, teed)
 	return nil
 }
 
