@@ -1,4 +1,4 @@
-package main
+package gifserver
 
 import (
 	"crypto/md5"
@@ -152,7 +152,7 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 	return err
 }
 
-func startServer(listenTo string, _config *config) {
+func StartServer(listenTo string, _config *config) {
 	serverConfig = _config
 	http.Handle("/transcode", basicHandler(transcodeHandler))
 	log.Print("Listening on ", listenTo)

@@ -1,4 +1,4 @@
-package main
+package gifserver
 
 import (
 	"io"
@@ -19,8 +19,8 @@ func NewFileCache(dir string) *FileCache {
 	}
 }
 
-func (self *FileCache) Put(fname string, reader io.Reader) (int64, error) {
-	writeCloser, err := self.PutWriter(fname)
+func (cache *FileCache) Put(fname string, reader io.Reader) (int64, error) {
+	writeCloser, err := cache.PutWriter(fname)
 
 	if err != nil {
 		return 0, err
@@ -30,8 +30,8 @@ func (self *FileCache) Put(fname string, reader io.Reader) (int64, error) {
 	return io.Copy(writeCloser, reader)
 }
 
-func (self *FileCache) PutWriter(fname string) (io.WriteCloser, error) {
-	target := path.Join(self.Dir, fname)
+func (cache *FileCache) PutWriter(fname string) (io.WriteCloser, error) {
+	target := path.Join(cache.Dir, fname)
 	log.Print("Writing ", target)
 
 	err := os.MkdirAll(path.Dir(target), 0755)
@@ -49,6 +49,6 @@ func (self *FileCache) PutWriter(fname string) (io.WriteCloser, error) {
 	return file, err
 }
 
-func (self *FileCache) Get(fname string) (io.ReadCloser, error) {
-	return os.Open(path.Join(self.Dir, fname))
+func (cache *FileCache) Get(fname string) (io.ReadCloser, error) {
+	return os.Open(path.Join(cache.Dir, fname))
 }

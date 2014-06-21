@@ -1,4 +1,4 @@
-package main
+package gifserver
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-var defaultConfigFname = "gifserver.json"
+var DefaultConfigFname = "gifserver.json"
 
 type config struct {
 	Secret   string
@@ -18,7 +18,7 @@ var defaultConfig = config{
 	MaxBytes: 1024 * 1024 * 5, // 5mb
 }
 
-func loadConfig(fname string) *config {
+func LoadConfig(fname string) *config {
 	c := defaultConfig
 	if fname == "" {
 		return &c

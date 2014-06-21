@@ -1,7 +1,6 @@
-package main
+package gifserver
 
 import (
-	"flag"
 	"fmt"
 	"image/gif"
 	"image/png"
@@ -12,19 +11,6 @@ import (
 	"os/exec"
 	"path"
 )
-
-var (
-	configFname string
-)
-
-func init() {
-	flag.StringVar(&configFname, "config", defaultConfigFname, "Path to json config")
-
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: gifserver [OPTIONS]\n\nOptions:\n")
-		flag.PrintDefaults()
-	}
-}
 
 func loadGif(fname string) (*gif.GIF, error) {
 	file, err := os.Open(fname)
@@ -62,12 +48,6 @@ func extractGif(gif *gif.GIF) (string, error) {
 	return dir, nil
 }
 
-func cleanDir(dir string) error {
-	log.Print("Removing ", dir)
-	return os.Remove(dir)
-}
-
-// log1 "Making ${out_base}.mp4..."
 // ffmpeg -i "$pattern" -pix_fmt yuv420p -vf 'scale=trunc(in_w/2)*2:trunc(in_h/2)*2' "${out_base}.mp4"
 
 func convertToMP4(dir string) (string, error) {
@@ -91,7 +71,6 @@ func convertToMP4(dir string) (string, error) {
 	return path.Join(dir, outFname), nil
 }
 
-// log1 "Making ${out_base}.ogv..."
 // ffmpeg -i "$pattern" -q 5 -pix_fmt yuv420p "${out_base}.ogv"
 
 func convertToOGV(dir string) (string, error) {
@@ -113,6 +92,11 @@ func convertToOGV(dir string) (string, error) {
 	}
 
 	return path.Join(dir, outFname), nil
+}
+
+func cleanDir(dir string) error {
+	log.Print("Removing ", dir)
+	return os.Remove(dir)
 }
 
 func copyFile(src, dest string) error {
@@ -139,10 +123,4 @@ func copyFile(src, dest string) error {
 
 	defer input.Close()
 	return nil
-}
-
-func main() {
-	flag.Parse()
-	config := loadConfig(configFname)
-	startServer(":9090", config)
 }
