@@ -17,7 +17,7 @@ conversion do not trigger multiple conversions.
 
 ```bash
 go get github.com/leafo/gifserver
-go install github.com/leaf/gifserver
+go install github.com/leafo/gifserver
 
 gifserver -help
 ```
