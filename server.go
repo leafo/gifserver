@@ -57,8 +57,13 @@ func (fn basicHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type readerClosure func(p []byte) (int, error)
+type writerClosure func(p []byte) (int, error)
 
 func (fn readerClosure) Read(p []byte) (int, error) {
+	return fn(p)
+}
+
+func (fn writerClosure) Write(p []byte) (int, error) {
 	return fn(p)
 }
 
@@ -74,6 +79,26 @@ func limitedReader(reader io.Reader, maxBytes int) readerClosure {
 		}
 
 		return bytesRead, err
+	}
+}
+
+func tryWriter(writer io.Writer) writerClosure {
+	failed := false
+	return func(p []byte) (int, error) {
+		if failed {
+			return len(p), nil
+		}
+
+		written, err := writer.Write(p)
+
+		if err != nil {
+			log.Print("Try writer failed, continuing...")
+			failed = true
+			written = len(p)
+			err = nil
+		}
+
+		return written, err
 	}
 }
 
@@ -157,17 +182,16 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-
 	cacheWriter, err := cache.PutWriter(key)
 
 	if err != nil {
 		return err
 	}
 
-	teed := io.TeeReader(file, cacheWriter)
-
 	w.Header().Add("Content-type", "video/mp4")
-	bytes, err := io.Copy(w, teed)
+
+	multi := io.MultiWriter(tryWriter(w), cacheWriter)
+	bytes, err := io.Copy(multi, file)
 	log.Print("Wrote ", bytes, " bytes")
 
 	return err
