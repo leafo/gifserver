@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/leafo/gifserver/gifserver"
@@ -24,5 +25,10 @@ func init() {
 func main() {
 	flag.Parse()
 	config := gifserver.LoadConfig(configFname)
+
+	if !gifserver.HasFFMPEG() {
+		log.Fatal("Could not find command `ffmpeg`, check to make sure it's install and available in $PATH")
+	}
+
 	gifserver.StartServer(config)
 }
