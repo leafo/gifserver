@@ -151,11 +151,11 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 	return err
 }
 
-func StartServer(listenTo string, _config *config) {
+func StartServer(_config *config) {
 	serverConfig = _config
 	cache = NewFileCache(serverConfig.CacheDir)
 
 	http.Handle("/transcode", basicHandler(transcodeHandler))
-	log.Print("Listening on ", listenTo)
-	http.ListenAndServe(listenTo, nil)
+	log.Print("Listening on ", serverConfig.Address)
+	http.ListenAndServe(serverConfig.Address, nil)
 }

@@ -9,12 +9,14 @@ import (
 var DefaultConfigFname = "gifserver.json"
 
 type config struct {
+	Address  string
 	Secret   string
 	CacheDir string
 	MaxBytes int
 }
 
 var defaultConfig = config{
+	Address:  ":9090",
 	Secret:   "",
 	CacheDir: "gifcache",
 	MaxBytes: 1024 * 1024 * 5, // 5mb

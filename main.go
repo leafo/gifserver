@@ -24,5 +24,5 @@ func init() {
 func main() {
 	flag.Parse()
 	config := gifserver.LoadConfig(configFname)
-	gifserver.StartServer(":9090", config)
+	gifserver.StartServer(config)
 }
