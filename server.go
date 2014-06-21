@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strconv"
 	"sync"
+	"time"
 )
 
 var shared struct {
@@ -50,6 +51,7 @@ type basicHandler func(w http.ResponseWriter, r *http.Request) error
 
 func (fn basicHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := fn(w, r); err != nil {
+		log.Print("ERROR: ", err.Error())
 		http.Error(w, err.Error(), 500)
 	}
 }
@@ -94,6 +96,10 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	key := requestKey(url, "mp4")
+
+	for keyBusy(key) {
+		time.Sleep(time.Second / 5)
+	}
 
 	lockKey(key)
 	defer unlockKey(key)
@@ -151,7 +157,6 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	w.Header().Add("Content-type", "video/mp4")
 
 	cacheWriter, err := cache.PutWriter(key)
 
@@ -160,8 +165,12 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	teed := io.TeeReader(file, cacheWriter)
-	io.Copy(w, teed)
-	return nil
+
+	w.Header().Add("Content-type", "video/mp4")
+	bytes, err := io.Copy(w, teed)
+	log.Print("Wrote ", bytes, " bytes")
+
+	return err
 }
 
 func startServer(listenTo string) {
