@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"image/gif"
 	"io"
@@ -17,16 +19,26 @@ var shared struct {
 	processing map[string]bool
 }
 
+func init() {
+	shared.processing = make(map[string]bool)
+}
+
 func keyBusy(key string) bool {
 	shared.Lock()
 	defer shared.Unlock()
 	return shared.processing[key]
 }
 
-func lockKey(key string) bool {
+func lockKey(key string) {
 	shared.Lock()
 	defer shared.Unlock()
-	return shared.processing[key]
+	shared.processing[key] = true
+}
+
+func unlockKey(key string) {
+	shared.Lock()
+	defer shared.Unlock()
+	shared.processing[key] = false
 }
 
 const maxBytes = 1024 * 1024 * 5 // 5mb
@@ -60,6 +72,11 @@ func limitedReader(reader io.Reader, maxBytes int) readerClosure {
 	}
 }
 
+func requestKey(url, format string) string {
+	raw := md5.Sum([]byte(url))
+	return hex.EncodeToString(raw[:]) + "." + format
+}
+
 func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 	params := r.URL.Query()
 	url := params.Get("url")
@@ -72,6 +89,14 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 	if !urlPattern.MatchString(url) {
 		url = "http://" + url
 	}
+
+	key := requestKey(url, "mp4")
+	if keyBusy(key) {
+		return fmt.Errorf("Key is busy")
+	}
+
+	lockKey(key)
+	defer unlockKey(key)
 
 	res, err := http.Get(url)
 
