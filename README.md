@@ -53,10 +53,10 @@ A JSON file is used to configure the server. The default config is as follows:
 
 ```json
 {
-	"Address":  ":9090",
-	"Secret":   "",
+	"Address": ":9090",
+	"Secret": "",
 	"CacheDir": "gifcache",
-	"MaxBytes": 1024 * 1024 * 5
+	"MaxBytes": 5242880
 }
 ```
 
@@ -74,7 +74,7 @@ triggering a [denial-of-service-attack][0] on your server by sending a large
 amount of conversion requests.
 
 To enable signed URLs provide a `Secret` in your config file. The server uses
-hmac sha1 to generate signatures for URLs. Generating the signature is
+SHA1 HMAC to generate signatures for URLs. Generating the signature is
 relatively simple:
 
 Given the following request to transcode a GIF:
