@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/gif"
 	"image/png"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -62,13 +63,14 @@ func cleanDir(dir string) error {
 // log1 "Making ${out_base}.mp4..."
 // ffmpeg -i "$pattern" -pix_fmt yuv420p -vf 'scale=trunc(in_w/2)*2:trunc(in_h/2)*2' "${out_base}.mp4"
 
-func convertToVideo(dir string) (string, error) {
+func convertToMP4(dir string) (string, error) {
+	outFname := "out.mp4"
 	pattern := "frame_%05d.png"
 	cmd := exec.Command("ffmpeg",
 		"-i", pattern,
 		"-pix_fmt", "yuv420p",
 		"-vf", "scale=trunc(in_w/2)*2:trunc(in_h/2)*2'",
-		"out.mp4")
+		outFname)
 
 	cmd.Dir = dir
 	err := cmd.Run()
@@ -77,12 +79,57 @@ func convertToVideo(dir string) (string, error) {
 		return "", err
 	}
 
-	return path.Join(dir, "out.mp4"), nil
+	return path.Join(dir, outFname), nil
 }
 
 // log1 "Making ${out_base}.ogv..."
 // ffmpeg -i "$pattern" -q 5 -pix_fmt yuv420p "${out_base}.ogv"
 
+func convertToOGV(dir string) (string, error) {
+	outFname := "out.ogv"
+
+	pattern := "frame_%05d.png"
+	cmd := exec.Command("ffmpeg",
+		"-i", pattern,
+		"-q", "5",
+		"-pix_fmt", "yuv420p",
+		outFname)
+
+	cmd.Dir = dir
+	err := cmd.Run()
+
+	if err != nil {
+		return "", err
+	}
+
+	return path.Join(dir, outFname), nil
+}
+
+func copyFile(src, dest string) error {
+	log.Print("Copying ", src, " to ", dest)
+
+	input, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+
+	output, err := os.Create(dest)
+
+	if err != nil {
+		return err
+	}
+
+	defer output.Close()
+
+	_, err = io.Copy(output, input)
+
+	if err != nil {
+		return err
+	}
+
+	defer input.Close()
+	return nil
+}
 
 func main() {
 	if len(os.Args) < 2 {
@@ -101,10 +148,13 @@ func main() {
 	}
 
 	defer cleanDir(dir)
-	vid, err := convertToVideo(dir)
+	vid, err := convertToOGV(dir)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
 	fmt.Println(vid)
+	if len(os.Args) > 2 {
+		copyFile(vid, os.Args[2])
+	}
 }
