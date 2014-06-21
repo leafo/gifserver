@@ -12,6 +12,8 @@ import (
 	"path"
 )
 
+type converter func(string) (string, error)
+
 func loadGif(fname string) (*gif.GIF, error) {
 	file, err := os.Open(fname)
 

@@ -18,6 +18,8 @@ import (
 
 var serverConfig *config
 
+const defaultFormat = "mp4"
+
 var shared struct {
 	sync.Mutex
 	processing map[string]bool
@@ -61,6 +63,35 @@ func requestKey(url, format string) string {
 	return hex.EncodeToString(raw[:]) + "." + format
 }
 
+func getConverter(format string) (string, converter, error) {
+	if format == "" {
+		format = defaultFormat
+	}
+
+	var c converter
+
+	switch format {
+	case "mp4":
+		c = convertToMP4
+	case "ogv":
+		c = convertToOGV
+	default:
+		return "", nil, fmt.Errorf("Invalid format")
+	}
+
+	return format, c, nil
+}
+
+func getContentType(format string) string {
+	switch format {
+	case "mp4":
+		return "video/mp4"
+	case "ogv":
+		return "video/ogg"
+	}
+	return ""
+}
+
 func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 	params := r.URL.Query()
 	url := params.Get("url")
@@ -74,7 +105,13 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 		url = "http://" + url
 	}
 
-	key := requestKey(url, "mp4")
+	format, conv, err := getConverter(params.Get("format"))
+
+	if err != nil {
+		return err
+	}
+
+	key := requestKey(url, format)
 
 	for keyBusy(key) {
 		time.Sleep(time.Second / 5)
@@ -88,7 +125,7 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 
 	if err == nil {
 		log.Print("Hit cache for ", key)
-		w.Header().Add("Content-type", "video/mp4")
+		w.Header().Add("Content-type", getContentType(format))
 		io.Copy(w, readCloser)
 		defer readCloser.Close()
 		return nil
@@ -124,7 +161,7 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	vidFname, err := convertToMP4(dir)
+	vidFname, err := conv(dir)
 
 	if err != nil {
 		return err
@@ -142,7 +179,7 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	w.Header().Add("Content-type", "video/mp4")
+	w.Header().Add("Content-type", getContentType(format))
 
 	multi := io.MultiWriter(tryWriter(w), cacheWriter)
 	bytes, err := io.Copy(multi, file)
