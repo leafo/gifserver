@@ -27,7 +27,6 @@ var cache *FileCache
 
 func init() {
 	shared.processing = make(map[string]bool)
-	cache = NewFileCache("gifcache")
 }
 
 func keyBusy(key string) bool {
@@ -154,6 +153,8 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 
 func StartServer(listenTo string, _config *config) {
 	serverConfig = _config
+	cache = NewFileCache(serverConfig.CacheDir)
+
 	http.Handle("/transcode", basicHandler(transcodeHandler))
 	log.Print("Listening on ", listenTo)
 	http.ListenAndServe(listenTo, nil)
