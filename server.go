@@ -1,10 +1,8 @@
 package main
 
 import (
-	"crypto/hmac"
 	"crypto/md5"
-	"crypto/sha1"
-	"encoding/base64"
+
 	"encoding/hex"
 	"fmt"
 	"image/gif"
@@ -17,6 +15,8 @@ import (
 	"sync"
 	"time"
 )
+
+const maxBytes = 1024 * 1024 * 5 // 5mb
 
 var shared struct {
 	sync.Mutex
@@ -48,60 +48,12 @@ func unlockKey(key string) {
 	shared.processing[key] = false
 }
 
-const maxBytes = 1024 * 1024 * 5 // 5mb
-
 type basicHandler func(w http.ResponseWriter, r *http.Request) error
 
 func (fn basicHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := fn(w, r); err != nil {
 		log.Print("ERROR: ", err.Error())
 		http.Error(w, err.Error(), 500)
-	}
-}
-
-type readerClosure func(p []byte) (int, error)
-type writerClosure func(p []byte) (int, error)
-
-func (fn readerClosure) Read(p []byte) (int, error) {
-	return fn(p)
-}
-
-func (fn writerClosure) Write(p []byte) (int, error) {
-	return fn(p)
-}
-
-func limitedReader(reader io.Reader, maxBytes int) readerClosure {
-	remainingBytes := maxBytes
-
-	return func(p []byte) (int, error) {
-		bytesRead, err := reader.Read(p)
-
-		remainingBytes -= bytesRead
-		if remainingBytes < 0 {
-			return 0, fmt.Errorf("Image is too large (> %d)", maxBytes)
-		}
-
-		return bytesRead, err
-	}
-}
-
-func tryWriter(writer io.Writer) writerClosure {
-	failed := false
-	return func(p []byte) (int, error) {
-		if failed {
-			return len(p), nil
-		}
-
-		written, err := writer.Write(p)
-
-		if err != nil {
-			log.Print("Try writer failed, continuing...")
-			failed = true
-			written = len(p)
-			err = nil
-		}
-
-		return written, err
 	}
 }
 
@@ -198,34 +150,6 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 	log.Print("Wrote ", bytes, " bytes")
 
 	return err
-}
-
-func checkSignature(r *http.Request) error {
-	params := r.URL.Query()
-	sig := params.Get("sig")
-
-	if sig == "" {
-		return fmt.Errorf("Missing signature")
-	}
-
-	patt := regexp.MustCompile(`[?&]sig=[^?&]+`)
-
-	toCheck := r.URL.Path
-	strippedQuery := patt.ReplaceAllString(r.URL.RawQuery, "")
-
-	if strippedQuery != "" {
-		toCheck = toCheck + "?" + strippedQuery
-	}
-
-	mac := hmac.New(sha1.New, []byte("secret"))
-	mac.Write([]byte(toCheck))
-	expectedSig := base64.StdEncoding.EncodeToString(mac.Sum(nil))
-
-	if expectedSig != sig {
-		return fmt.Errorf("Invalid signature")
-	}
-
-	return nil
 }
 
 func startServer(listenTo string) {
