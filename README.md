@@ -32,15 +32,20 @@ By default the command will look for a config file named `gifserver.json` in
 the current directory. You can override the config file's path with the
 `-config` command line flag.
 
-To resize a GIF just request the server at the `/transcode` path with the URL
-parameter to the URL you want transcoded (The `http` is optional):
+To transcode a GIF just request the server at the `/transcode` path with the
+URL of the GIF you would like converted: (The `http://` is optional):
 
 ```
 http://localhost:9090/transcode?url=leafo.net/dump/test.gif
 ```
 
-An MP4 is returned by default. If there are any errors a 500 error is returned
+An MP4 is returned by default. If there are any problems an HTTP 500 error is returned
 and the server returns an error message.
+
+The `/transcode` path takes the following query parameters:
+
+* **url** the url of the gif to load *(required)*
+* **format** the format to transcode to, either `mp4` or `ogv` *(optional)*
 
 ## Config
 
@@ -57,10 +62,10 @@ A JSON file is used to configure the server. The default config is as follows:
 
 Your config can replace any combination of the defaults with your own values.
 
-* **Address** -- the address to bind the server to
-* **Secret** -- secret key to use for singed URLs. If `""` is the secret key then signed URLs are disabled
-* **CacheDir** -- where to cache transcoded GIFs
-* **MaxBytes** -- the max size of GIF in bytes allowed to be processed
+* **Address** the address to bind the server to
+* **Secret** secret key to use for singed URLs. If `""` is the secret key then signed URLs are disabled
+* **CacheDir** where to cache transcoded GIFs
+* **MaxBytes** the max size of GIF in bytes allowed to be processed
 
 ## Signed URLs
 
