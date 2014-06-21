@@ -1,12 +1,14 @@
 package gifserver
 
 import (
+	"bytes"
 	"crypto/md5"
 
 	"encoding/hex"
 	"fmt"
 	"image/gif"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -148,7 +150,20 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	gif, err := gif.DecodeAll(limitedReader(res.Body, serverConfig.MaxBytes))
+	gifData, err := ioutil.ReadAll(limitedReader(res.Body, serverConfig.MaxBytes))
+
+	if err != nil {
+		return err
+	}
+
+	err = checkDimensions(bytes.NewReader(gifData),
+		serverConfig.MaxWidth, serverConfig.MaxHeight)
+
+	if err != nil {
+		return err
+	}
+
+	gif, err := gif.DecodeAll(bytes.NewReader(gifData))
 
 	if err != nil {
 		return err

@@ -26,6 +26,21 @@ func loadGif(fname string) (*gif.GIF, error) {
 	return gif.DecodeAll(file)
 }
 
+func checkDimensions(reader io.Reader, maxWidth, maxHeight int) error {
+	data, err := gif.DecodeConfig(reader)
+
+	if err != nil {
+		return err
+	}
+
+	if data.Width > maxWidth || data.Height > maxHeight {
+		return fmt.Errorf("Image dimensions too large (%d, %d) > (%d, %d)",
+			data.Width, data.Height, maxWidth, maxHeight)
+	}
+
+	return nil
+}
+
 func extractGif(gif *gif.GIF) (string, error) {
 	dir, err := ioutil.TempDir("", "gifserver")
 
