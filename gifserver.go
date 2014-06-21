@@ -12,12 +12,6 @@ import (
 	"path"
 )
 
-type gifData struct {
-	width  int
-	height int
-	frames int
-}
-
 func loadGif(fname string) (*gif.GIF, error) {
 	file, err := os.Open(fname)
 
@@ -37,11 +31,10 @@ func extractGif(gif *gif.GIF) (string, error) {
 		return "", err
 	}
 
-	log.Print("Extracting ", len(gif.Image), "frames")
+	log.Print("Extracting ", len(gif.Image), " frames")
 
 	for i, image := range gif.Image {
 		dest := path.Join(dir, fmt.Sprintf("frame_%05d.png", i))
-		fmt.Println("Extracting frame", i, "to", dest)
 		file, err := os.Create(dest)
 		if err != nil {
 			return "", err
@@ -56,7 +49,7 @@ func extractGif(gif *gif.GIF) (string, error) {
 }
 
 func cleanDir(dir string) error {
-	log.Print("Removing", dir)
+	log.Print("Removing ", dir)
 	return os.Remove(dir)
 }
 
@@ -64,6 +57,8 @@ func cleanDir(dir string) error {
 // ffmpeg -i "$pattern" -pix_fmt yuv420p -vf 'scale=trunc(in_w/2)*2:trunc(in_h/2)*2' "${out_base}.mp4"
 
 func convertToMP4(dir string) (string, error) {
+	log.Print("Encoding ", dir, " to mp4")
+
 	outFname := "out.mp4"
 	pattern := "frame_%05d.png"
 	cmd := exec.Command("ffmpeg",
@@ -86,8 +81,9 @@ func convertToMP4(dir string) (string, error) {
 // ffmpeg -i "$pattern" -q 5 -pix_fmt yuv420p "${out_base}.ogv"
 
 func convertToOGV(dir string) (string, error) {
-	outFname := "out.ogv"
+	log.Print("Encoding ", dir, " to ogv")
 
+	outFname := "out.ogv"
 	pattern := "frame_%05d.png"
 	cmd := exec.Command("ffmpeg",
 		"-i", pattern,
@@ -131,7 +127,7 @@ func copyFile(src, dest string) error {
 	return nil
 }
 
-func main() {
+func test() {
 	if len(os.Args) < 2 {
 		log.Fatal("Missing file")
 	}
@@ -153,8 +149,11 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	fmt.Println(vid)
 	if len(os.Args) > 2 {
 		copyFile(vid, os.Args[2])
 	}
+}
+
+func main() {
+	startServer(":9090")
 }
