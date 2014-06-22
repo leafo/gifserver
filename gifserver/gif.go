@@ -33,9 +33,12 @@ func checkDimensions(reader io.Reader, maxWidth, maxHeight int) error {
 		return err
 	}
 
-	if data.Width > maxWidth || data.Height > maxHeight {
-		return fmt.Errorf("Image dimensions too large (%d, %d) > (%d, %d)",
-			data.Width, data.Height, maxWidth, maxHeight)
+	if maxWidth > 0 && data.Width > maxWidth {
+		return fmt.Errorf("Image width too large %d > %d", data.Width, maxWidth)
+	}
+
+	if maxHeight > 0 && data.Height > maxHeight {
+		return fmt.Errorf("Image height too large %d > %d", data.Height, maxHeight)
 	}
 
 	return nil

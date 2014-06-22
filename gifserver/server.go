@@ -144,16 +144,23 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 
 	defer res.Body.Close()
 
+	resBody := io.Reader(res.Body)
+
 	// Check if content length is too large
-	contentLengthStr := res.Header.Get("content-length")
-	if contentLengthStr != "" {
-		contentLength, err := strconv.Atoi(contentLengthStr)
-		if err != nil && contentLength > serverConfig.MaxBytes {
-			return fmt.Errorf("Image is too large (%d > %d)", contentLength, serverConfig.MaxBytes)
+	if serverConfig.MaxBytes > 0 {
+		contentLengthStr := res.Header.Get("content-length")
+		if contentLengthStr != "" {
+			contentLength, err := strconv.Atoi(contentLengthStr)
+			if err != nil && contentLength > serverConfig.MaxBytes {
+				return fmt.Errorf("Image is too large (%d > %d)",
+					contentLength, serverConfig.MaxBytes)
+			}
 		}
+
+		resBody = limitedReader(resBody, serverConfig.MaxBytes)
 	}
 
-	gifData, err := ioutil.ReadAll(limitedReader(res.Body, serverConfig.MaxBytes))
+	gifData, err := ioutil.ReadAll(resBody)
 
 	if err != nil {
 		return err
