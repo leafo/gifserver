@@ -103,6 +103,11 @@ func getContentType(format string) string {
 
 func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 	params := r.URL.Query()
+	err := checkSignature(r, serverConfig.Secret)
+	if err != nil {
+		return err
+	}
+
 	url := params.Get("url")
 
 	if url == "" {
