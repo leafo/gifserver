@@ -14,7 +14,8 @@ var (
 )
 
 func init() {
-	flag.StringVar(&configFname, "config", gifserver.DefaultConfigFname, "Path to json config")
+	flag.StringVar(&configFname, "config",
+		gifserver.DefaultConfigFname, "Path to json config")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: gifserver [OPTIONS]\n\nOptions:\n")

@@ -18,7 +18,10 @@ import (
 	"time"
 )
 
-var serverConfig *config
+var (
+	serverConfig     *config
+	concurrencyLimit chan bool
+)
 
 const defaultFormat = "mp4"
 
@@ -163,6 +166,13 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	if serverConfig.MaxConcurrency > 0 {
+		<-concurrencyLimit
+		defer func() {
+			concurrencyLimit <- true
+		}()
+	}
+
 	gif, err := gif.DecodeAll(bytes.NewReader(gifData))
 
 	if err != nil {
@@ -206,6 +216,13 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 func StartServer(_config *config) {
 	serverConfig = _config
 	cache = NewFileCache(serverConfig.CacheDir)
+
+	if serverConfig.MaxConcurrency > 0 {
+		concurrencyLimit = make(chan bool, serverConfig.MaxConcurrency)
+		for i := 0; i < serverConfig.MaxConcurrency; i++ {
+			concurrencyLimit <- true
+		}
+	}
 
 	http.Handle("/transcode", basicHandler(transcodeHandler))
 	log.Print("Listening on ", serverConfig.Address)

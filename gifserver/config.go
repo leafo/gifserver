@@ -6,24 +6,26 @@ import (
 	"log"
 )
 
-var DefaultConfigFname = "gifserver.json"
+const DefaultConfigFname = "gifserver.json"
 
 type config struct {
-	Address   string
-	Secret    string
-	CacheDir  string
-	MaxBytes  int
-	MaxWidth  int
-	MaxHeight int
+	Address        string
+	Secret         string
+	CacheDir       string
+	MaxBytes       int
+	MaxWidth       int
+	MaxHeight      int
+	MaxConcurrency int
 }
 
 var defaultConfig = config{
-	Address:   ":9090",
-	Secret:    "",
-	CacheDir:  "gifcache",
-	MaxBytes:  1024 * 1024 * 5, // 5mb
-	MaxWidth:  512,
-	MaxHeight: 512,
+	Address:        ":9090",
+	Secret:         "",
+	CacheDir:       "gifcache",
+	MaxBytes:       1024 * 1024 * 5, // 5mb
+	MaxWidth:       512,
+	MaxHeight:      512,
+	MaxConcurrency: 0,
 }
 
 func LoadConfig(fname string) *config {
