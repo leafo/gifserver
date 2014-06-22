@@ -57,6 +57,9 @@ A JSON file is used to configure the server. The default config is as follows:
 	"Secret": "",
 	"CacheDir": "gifcache",
 	"MaxBytes": 5242880
+	"MaxWidth": 512,
+	"MaxHeight": 512,
+	"MaxConcurrency": 0,
 }
 ```
 
@@ -65,7 +68,10 @@ Your config can replace any combination of the defaults with your own values.
 * **Address** the address to bind the server to
 * **Secret** secret key to use for singed URLs. If `""` is the secret key then signed URLs are disabled
 * **CacheDir** where to cache transcoded GIFs
-* **MaxBytes** the max size of GIF in bytes allowed to be processed
+* **MaxBytes** the max size of GIF in bytes allowed to be processed, setting to 0 disabled
+* **MaxWidth** the max width of GIF that can be processed, setting to 0 disables
+* **MaxHeight** the max width of GIF that can be processed, setting to 0 disables
+* **MaxConcurrency** the max number of transcodes that can be in process at once, additional ones are queued. Setting to 0 disables
 
 ## Signed URLs
 
@@ -98,6 +104,17 @@ Then perform the request with the signed URL. You should always append the
 signature at the end of the URL. You must not change the order of the original
 query parameters in any way when appending the signature otherwise the
 signature is invalid.
+
+## Preventing Abuse
+
+A few config options to prevent malicious GIFs from blocking the server are
+included.
+
+MaxBytes, MaxWidth, and MaxHeight should all be set to reasonable values to
+prevent large images from being loaded and taking up a large amount of memory.
+
+MaxConcurrency should be set to prevent an influx of trascode requests from
+taking over the CPU.
 
 ## About
 
