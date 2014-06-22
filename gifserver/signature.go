@@ -9,8 +9,8 @@ import (
 	"regexp"
 )
 
-func checkSignature(r *http.Request) error {
-	if serverConfig.Secret == "" {
+func checkSignature(r *http.Request, secret string) error {
+	if secret == "" {
 		return nil
 	}
 
@@ -30,7 +30,7 @@ func checkSignature(r *http.Request) error {
 		toCheck = toCheck + "?" + strippedQuery
 	}
 
-	mac := hmac.New(sha1.New, []byte(serverConfig.Secret))
+	mac := hmac.New(sha1.New, []byte(secret))
 	mac.Write([]byte(toCheck))
 	expectedSig := base64.StdEncoding.EncodeToString(mac.Sum(nil))
 
