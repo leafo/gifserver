@@ -17,7 +17,6 @@ conversion do not trigger multiple conversions.
 
 ```bash
 go get github.com/leafo/gifserver
-go install github.com/leafo/gifserver
 
 gifserver -help
 ```
@@ -56,10 +55,10 @@ A JSON file is used to configure the server. The default config is as follows:
 	"Address": ":9090",
 	"Secret": "",
 	"CacheDir": "gifcache",
-	"MaxBytes": 5242880
+	"MaxBytes": 5242880,
 	"MaxWidth": 512,
 	"MaxHeight": 512,
-	"MaxConcurrency": 0,
+	"MaxConcurrency": 0
 }
 ```
 
