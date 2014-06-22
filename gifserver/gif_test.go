@@ -3,17 +3,11 @@ package gifserver
 import (
 	"bytes"
 	"io/ioutil"
+	"os"
 	"testing"
 )
 
 const testGifFname = "../test/hello.gif"
-
-func TestOpen(t *testing.T) {
-	_, err := loadGif(testGifFname)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-}
 
 func TestCheckDimensions(t *testing.T) {
 	gifBytes, _ := ioutil.ReadFile(testGifFname)
@@ -33,21 +27,30 @@ func TestCheckDimensions(t *testing.T) {
 		t.Error("should fail check dimensions")
 	}
 
-
 	err = checkDimensions(bytes.NewReader(gifBytes), 300, 300)
 	if err != nil {
 		t.Error("should not fail check dimensions: " + err.Error())
 	}
 }
 
-func TestExtraction(t *testing.T) {
-	gif, _ := loadGif(testGifFname)
-	dir, err := extractGif(gif)
+func TestExtract(t *testing.T) {
+	input, _ := os.Open(testGifFname)
+	defer input.Close()
+
+	dir, err := prepareConversion(input)
+
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
 	defer cleanDir(dir)
+
+	err = extractGif(dir)
 
 	if err != nil {
 		t.Error(err.Error())
 	}
+
 }
 
 func TestConvertMP4(t *testing.T) {
@@ -55,9 +58,11 @@ func TestConvertMP4(t *testing.T) {
 		t.Skip("missing ffmpeg, can't continue")
 	}
 
-	gif, _ := loadGif(testGifFname)
-	dir, _ := extractGif(gif)
+	input, _ := os.Open(testGifFname)
+	dir, _ := prepareConversion(input)
+
 	defer cleanDir(dir)
+	extractGif(dir)
 
 	_, err := convertToMP4(dir)
 
@@ -71,9 +76,11 @@ func TestConvertOGV(t *testing.T) {
 		t.Skip("missing ffmpeg, can't continue")
 	}
 
-	gif, _ := loadGif(testGifFname)
-	dir, _ := extractGif(gif)
+	input, _ := os.Open(testGifFname)
+	dir, _ := prepareConversion(input)
+
 	defer cleanDir(dir)
+	extractGif(dir)
 
 	_, err := convertToOGV(dir)
 
@@ -81,5 +88,3 @@ func TestConvertOGV(t *testing.T) {
 		t.Error(err.Error())
 	}
 }
-
-

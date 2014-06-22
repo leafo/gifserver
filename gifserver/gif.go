@@ -3,7 +3,6 @@ package gifserver
 import (
 	"fmt"
 	"image/gif"
-	"image/png"
 	"io"
 	"io/ioutil"
 	"log"
@@ -13,18 +12,6 @@ import (
 )
 
 type converter func(string) (string, error)
-
-func loadGif(fname string) (*gif.GIF, error) {
-	file, err := os.Open(fname)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer file.Close()
-
-	return gif.DecodeAll(file)
-}
 
 func checkDimensions(reader io.Reader, maxWidth, maxHeight int) error {
 	data, err := gif.DecodeConfig(reader)
@@ -44,28 +31,19 @@ func checkDimensions(reader io.Reader, maxWidth, maxHeight int) error {
 	return nil
 }
 
-func extractGif(gif *gif.GIF) (string, error) {
-	dir, err := ioutil.TempDir("", "gifserver")
+// convert -coalesce brocoli.gif out%05d.pgm
 
-	if err != nil {
-		return "", err
-	}
+func extractGif(dir string) error {
+	log.Print("Extracting ", dir)
+	pattern := "frame_%05d.png"
 
-	log.Print("Extracting ", len(gif.Image), " frames")
+	cmd := exec.Command("convert",
+		"-coalesce",
+		"in.gif",
+		pattern)
 
-	for i, image := range gif.Image {
-		dest := path.Join(dir, fmt.Sprintf("frame_%05d.png", i))
-		file, err := os.Create(dest)
-		if err != nil {
-			return "", err
-		}
-
-		defer file.Close()
-
-		png.Encode(file, image)
-	}
-
-	return dir, nil
+	cmd.Dir = dir
+	return cmd.Run()
 }
 
 // ffmpeg -i "$pattern" -pix_fmt yuv420p -vf 'scale=trunc(in_w/2)*2:trunc(in_h/2)*2' "${out_base}.mp4"
@@ -121,6 +99,32 @@ func convertToFrame(dir string) (string, error) {
 func cleanDir(dir string) error {
 	log.Print("Removing ", dir)
 	return os.Remove(dir)
+}
+
+func prepareConversion(reader io.Reader) (string, error) {
+	dir, err := ioutil.TempDir("", "gifserver")
+
+	if err != nil {
+		return "", err
+	}
+
+	output, err := os.Create(path.Join(dir, "in.gif"))
+
+	if err != nil {
+		cleanDir(dir)
+		return "", err
+	}
+
+	defer output.Close()
+
+	_, err = io.Copy(output, reader)
+
+	if err != nil {
+		cleanDir(dir)
+		return "", err
+	}
+
+	return dir, nil
 }
 
 func copyFile(src, dest string) error {

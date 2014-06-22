@@ -1,14 +1,12 @@
 package gifserver
 
 import (
-	"bytes"
 	"crypto/md5"
+	"path"
 
 	"encoding/hex"
 	"fmt"
-	"image/gif"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -169,14 +167,23 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 		resBody = limitedReader(resBody, serverConfig.MaxBytes)
 	}
 
-	gifData, err := ioutil.ReadAll(resBody)
+	dir, err := prepareConversion(resBody)
 
 	if err != nil {
 		return err
 	}
 
-	err = checkDimensions(bytes.NewReader(gifData),
-		serverConfig.MaxWidth, serverConfig.MaxHeight)
+	defer cleanDir(dir)
+
+	file, err := os.Open(path.Join(dir, "in.gif"))
+
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	err = checkDimensions(file, serverConfig.MaxWidth, serverConfig.MaxHeight)
 
 	if err != nil {
 		return err
@@ -189,14 +196,7 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 		}()
 	}
 
-	gif, err := gif.DecodeAll(bytes.NewReader(gifData))
-
-	if err != nil {
-		return err
-	}
-
-	dir, err := extractGif(gif)
-	defer cleanDir(dir)
+	err = extractGif(dir)
 
 	if err != nil {
 		return err
@@ -208,11 +208,13 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	file, err := os.Open(vidFname)
+	vidFile, err := os.Open(vidFname)
 
 	if err != nil {
 		return err
 	}
+
+	defer vidFile.Close()
 
 	cacheWriter, err := cache.PutWriter(key)
 
@@ -223,7 +225,7 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Add("Content-type", getContentType(format))
 
 	multi := io.MultiWriter(tryWriter(w), cacheWriter)
-	bytes, err := io.Copy(multi, file)
+	bytes, err := io.Copy(multi, vidFile)
 	log.Print("Wrote ", bytes, " bytes")
 
 	return err
