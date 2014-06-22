@@ -44,7 +44,9 @@ and the server returns an error message.
 The `/transcode` path takes the following query parameters:
 
 * **url** the url of the gif to load *(required)*
-* **format** the format to transcode to, either `mp4` or `ogv` *(optional)*
+* **format** the format to transcode to, either `mp4`, `ogv`, `png` *(optional)*
+
+Using `png` as the format will return an image that has the first frame of the GIF.
 
 ## Config
 
