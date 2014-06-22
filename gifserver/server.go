@@ -80,6 +80,8 @@ func getConverter(format string) (string, converter, error) {
 		c = convertToMP4
 	case "ogv":
 		c = convertToOGV
+	case "png":
+		c = convertToFrame
 	default:
 		return "", nil, fmt.Errorf("Invalid format")
 	}
@@ -93,6 +95,8 @@ func getContentType(format string) string {
 		return "video/mp4"
 	case "ogv":
 		return "video/ogg"
+	case "png":
+		return "image/png"
 	}
 	return ""
 }

@@ -114,6 +114,10 @@ func convertToOGV(dir string) (string, error) {
 	return path.Join(dir, outFname), nil
 }
 
+func convertToFrame(dir string) (string, error) {
+	return path.Join(dir, "frame_00001.png"), nil
+}
+
 func cleanDir(dir string) error {
 	log.Print("Removing ", dir)
 	return os.Remove(dir)
