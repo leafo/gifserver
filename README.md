@@ -38,8 +38,9 @@ URL of the GIF you would like converted: (The `http://` is optional):
 http://localhost:9090/transcode?url=leafo.net/dump/test.gif
 ```
 
-An MP4 is returned by default. If there are any problems an HTTP 500 error is returned
-and the server returns an error message.
+The type of video will be detected from the `Accept` header. If nothing could
+be detected a MP4 is returned by default. If there are any problems an HTTP 500
+error is returned and the server returns an error message.
 
 The `/transcode` path takes the following query parameters:
 
