@@ -49,6 +49,6 @@ func (cache *FileCache) PutWriter(fname string) (io.WriteCloser, error) {
 	return file, err
 }
 
-func (cache *FileCache) Get(fname string) (io.ReadCloser, error) {
+func (cache *FileCache) Get(fname string) (*os.File, error) {
 	return os.Open(path.Join(cache.Dir, fname))
 }

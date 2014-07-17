@@ -133,13 +133,12 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 	defer unlockKey(key)
 
 	// see if cache has it
-	readCloser, err := cache.Get(key)
+	cacheFile, err := cache.Get(key)
 
 	if err == nil {
 		log.Print("Hit cache for ", key)
-		w.Header().Add("Content-type", getContentType(format))
-		io.Copy(w, readCloser)
-		defer readCloser.Close()
+		defer cacheFile.Close()
+		http.ServeContent(w, r, key, time.Time{}, cacheFile)
 		return nil
 	}
 
@@ -222,12 +221,28 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	w.Header().Add("Content-type", getContentType(format))
+	defer cacheWriter.Close()
+	bytes, err := io.Copy(cacheWriter, vidFile)
 
-	multi := io.MultiWriter(tryWriter(w), cacheWriter)
-	bytes, err := io.Copy(multi, vidFile)
+	if err != nil {
+		return err
+	}
+
 	log.Print("Wrote ", bytes, " bytes")
+	cacheFile, err = cache.Get(key)
 
+	if err != nil {
+		return err
+	}
+
+	defer cacheFile.Close()
+
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return err
+	}
+
+	http.ServeContent(w, r, key, fileInfo.ModTime(), cacheFile)
 	return err
 }
 
