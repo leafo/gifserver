@@ -12,6 +12,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -87,15 +88,17 @@ func getConverter(format string) (string, converter, error) {
 	return format, c, nil
 }
 
-func getContentType(format string) string {
-	switch format {
-	case "mp4":
-		return "video/mp4"
-	case "ogv":
-		return "video/ogg"
-	case "png":
-		return "image/png"
+func guessFormat(accept string) string {
+	accepts := strings.Split(accept, ",")
+	for _, accept := range accepts {
+		switch accept {
+		case "video/mp4":
+			return "mp4"
+		case "video/ogg":
+			return "ogv"
+		}
 	}
+
 	return ""
 }
 
@@ -117,7 +120,12 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 		url = "http://" + url
 	}
 
-	format, conv, err := getConverter(params.Get("format"))
+	formatName := params.Get("format")
+	if formatName == "" {
+		formatName = guessFormat(r.Header.Get("Accept"))
+	}
+
+	format, conv, err := getConverter(formatName)
 
 	if err != nil {
 		return err
