@@ -141,13 +141,14 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 	defer unlockKey(key)
 
 	// see if cache has it
-	cacheFile, err := cache.Get(key)
-
-	if err == nil {
-		log.Print("Hit cache for ", key)
-		defer cacheFile.Close()
-		http.ServeContent(w, r, key, time.Time{}, cacheFile)
-		return nil
+	if serverConfig.Cache {
+		cacheFile, err := cache.Get(key)
+		if err == nil {
+			log.Print("Hit cache for ", key)
+			defer cacheFile.Close()
+			http.ServeContent(w, r, key, time.Time{}, cacheFile)
+			return nil
+		}
 	}
 
 	res, err := http.Get(url)
@@ -223,34 +224,43 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 
 	defer vidFile.Close()
 
-	cacheWriter, err := cache.PutWriter(key)
+	if serverConfig.Cache {
+		cacheWriter, err := cache.PutWriter(key)
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
+
+		defer cacheWriter.Close()
+		_, err = io.Copy(cacheWriter, vidFile)
+
+		if err != nil {
+			return err
+		}
+
+		cacheFile, err := cache.Get(key)
+
+		if err != nil {
+			return err
+		}
+
+		defer cacheFile.Close()
+
+		fileInfo, err := file.Stat()
+		if err != nil {
+			return err
+		}
+
+		http.ServeContent(w, r, key, fileInfo.ModTime(), cacheFile)
+	} else {
+		fileInfo, err := vidFile.Stat()
+		if err != nil {
+			return err
+		}
+
+		http.ServeContent(w, r, key, fileInfo.ModTime(), vidFile)
 	}
 
-	defer cacheWriter.Close()
-	bytes, err := io.Copy(cacheWriter, vidFile)
-
-	if err != nil {
-		return err
-	}
-
-	log.Print("Wrote ", bytes, " bytes")
-	cacheFile, err = cache.Get(key)
-
-	if err != nil {
-		return err
-	}
-
-	defer cacheFile.Close()
-
-	fileInfo, err := file.Stat()
-	if err != nil {
-		return err
-	}
-
-	http.ServeContent(w, r, key, fileInfo.ModTime(), cacheFile)
 	return err
 }
 
