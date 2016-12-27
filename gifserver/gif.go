@@ -96,9 +96,12 @@ func convertToFrame(dir string) (string, error) {
 	return path.Join(dir, "frame_00001.png"), nil
 }
 
-func cleanDir(dir string) error {
+func cleanDir(dir string) {
 	log.Print("Removing ", dir)
-	return os.RemoveAll(dir)
+	err := os.RemoveAll(dir)
+	if err != nil {
+		log.Print("Warning: ", err)
+	}
 }
 
 func prepareConversion(reader io.Reader) (string, error) {
