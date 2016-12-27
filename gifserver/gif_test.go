@@ -53,7 +53,7 @@ func TestExtract(t *testing.T) {
 
 }
 
-func TestConvertMP4(t *testing.T) {
+func TestConvertGifMP4(t *testing.T) {
 	if !HasFFMPEG() {
 		t.Skip("missing ffmpeg, can't continue")
 	}
@@ -62,16 +62,15 @@ func TestConvertMP4(t *testing.T) {
 	dir, _ := prepareConversion(input)
 
 	defer cleanDir(dir)
-	extractGif(dir)
 
-	_, err := convertToMP4(dir)
+	_, err := convertGifToMP4(dir)
 
 	if err != nil {
 		t.Error(err.Error())
 	}
 }
 
-func TestConvertOGV(t *testing.T) {
+func TestConvertFramesMP4(t *testing.T) {
 	if !HasFFMPEG() {
 		t.Skip("missing ffmpeg, can't continue")
 	}
@@ -82,7 +81,25 @@ func TestConvertOGV(t *testing.T) {
 	defer cleanDir(dir)
 	extractGif(dir)
 
-	_, err := convertToOGV(dir)
+	_, err := convertFramesToMP4(dir)
+
+	if err != nil {
+		t.Error(err.Error())
+	}
+}
+
+func TestConvertFramesOGV(t *testing.T) {
+	if !HasFFMPEG() {
+		t.Skip("missing ffmpeg, can't continue")
+	}
+
+	input, _ := os.Open(testGifFname)
+	dir, _ := prepareConversion(input)
+
+	defer cleanDir(dir)
+	extractGif(dir)
+
+	_, err := convertFramesToOGV(dir)
 
 	if err != nil {
 		t.Error(err.Error())
