@@ -98,7 +98,7 @@ func convertToFrame(dir string) (string, error) {
 
 func cleanDir(dir string) error {
 	log.Print("Removing ", dir)
-	return os.Remove(dir)
+	return os.RemoveAll(dir)
 }
 
 func prepareConversion(reader io.Reader) (string, error) {
