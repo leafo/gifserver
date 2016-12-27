@@ -151,6 +151,7 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
+	log.Print("Downloading ", url)
 	res, err := http.Get(url)
 
 	if err != nil {

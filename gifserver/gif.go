@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 )
 
 type converter func(string) (string, error)
@@ -48,7 +49,7 @@ func extractGif(dir string) error {
 
 // ffmpeg -i "$pattern" -pix_fmt yuv420p -vf 'scale=trunc(in_w/2)*2:trunc(in_h/2)*2' "${out_base}.mp4"
 
-func convertToMP4(dir string) (string, error) {
+func convertFramesToMP4(dir string) (string, error) {
 	log.Print("Encoding ", dir, " to mp4")
 
 	outFname := "out.mp4"
@@ -67,6 +68,27 @@ func convertToMP4(dir string) (string, error) {
 	}
 
 	return path.Join(dir, outFname), nil
+}
+
+func convertGifToMP4(fname string) (string, error) {
+	log.Print("Encoding ", fname, " to mp4")
+
+	outFname := "out.mp4"
+	cmd := exec.Command("ffmpeg",
+		"-i", fname,
+		"-movflags", "faststart",
+		"-pix_fmt", "yuv420p",
+		"-vf", "scale=trunc(in_w/2)*2:trunc(in_h/2)*2",
+		outFname)
+
+	cmd.Dir = filepath.Dir(fname)
+	err := cmd.Run()
+
+	if err != nil {
+		return "", err
+	}
+
+	return path.Join(filepath.Dir(fname), outFname), nil
 }
 
 // ffmpeg -i "$pattern" -q 5 -pix_fmt yuv420p "${out_base}.ogv"
