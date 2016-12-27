@@ -56,7 +56,7 @@ func convertToMP4(dir string) (string, error) {
 	cmd := exec.Command("ffmpeg",
 		"-i", pattern,
 		"-pix_fmt", "yuv420p",
-		"-vf", "scale=trunc(in_w/2)*2:trunc(in_h/2)*2'",
+		"-vf", "scale=trunc(in_w/2)*2:trunc(in_h/2)*2",
 		outFname)
 
 	cmd.Dir = dir
