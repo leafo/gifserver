@@ -11,6 +11,7 @@ const DefaultConfigFname = "gifserver.json"
 type config struct {
 	Address        string
 	Secret         string
+	Cache          bool
 	CacheDir       string
 	MaxBytes       int
 	MaxWidth       int
@@ -21,6 +22,7 @@ type config struct {
 var defaultConfig = config{
 	Address:        ":9090",
 	Secret:         "",
+	Cache:          true,
 	CacheDir:       "gifcache",
 	MaxBytes:       1024 * 1024 * 5, // 5mb
 	MaxWidth:       512,
