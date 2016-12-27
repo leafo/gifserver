@@ -52,6 +52,12 @@ func extractGif(dir string) error {
 func convertFramesToMP4(dir string) (string, error) {
 	log.Print("Encoding ", dir, " to mp4")
 
+	err := extractGif(dir)
+
+	if err != nil {
+		return "", err
+	}
+
 	outFname := "out.mp4"
 	pattern := "frame_%05d.png"
 	cmd := exec.Command("ffmpeg",
@@ -61,7 +67,7 @@ func convertFramesToMP4(dir string) (string, error) {
 		outFname)
 
 	cmd.Dir = dir
-	err := cmd.Run()
+	err = cmd.Run()
 
 	if err != nil {
 		return "", err
@@ -70,7 +76,9 @@ func convertFramesToMP4(dir string) (string, error) {
 	return path.Join(dir, outFname), nil
 }
 
-func convertGifToMP4(fname string) (string, error) {
+func convertGifToMP4(dir string) (string, error) {
+	fname := path.Join(dir, "in.gif")
+
 	log.Print("Encoding ", fname, " to mp4")
 
 	outFname := "out.mp4"
@@ -93,8 +101,14 @@ func convertGifToMP4(fname string) (string, error) {
 
 // ffmpeg -i "$pattern" -q 5 -pix_fmt yuv420p "${out_base}.ogv"
 
-func convertToOGV(dir string) (string, error) {
+func convertFramesToOGV(dir string) (string, error) {
 	log.Print("Encoding ", dir, " to ogv")
+
+	err := extractGif(dir)
+
+	if err != nil {
+		return "", err
+	}
 
 	outFname := "out.ogv"
 	pattern := "frame_%05d.png"
@@ -105,7 +119,7 @@ func convertToOGV(dir string) (string, error) {
 		outFname)
 
 	cmd.Dir = dir
-	err := cmd.Run()
+	err = cmd.Run()
 
 	if err != nil {
 		return "", err
@@ -115,6 +129,12 @@ func convertToOGV(dir string) (string, error) {
 }
 
 func convertToFrame(dir string) (string, error) {
+	err := extractGif(dir) // TODO: only extract the first frame, not everything
+
+	if err != nil {
+		return "", err
+	}
+
 	return path.Join(dir, "frame_00001.png"), nil
 }
 

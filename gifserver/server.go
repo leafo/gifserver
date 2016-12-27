@@ -76,9 +76,9 @@ func getConverter(format string) (string, converter, error) {
 
 	switch format {
 	case "mp4":
-		c = convertToMP4
+		c = convertGifToMP4
 	case "ogv":
-		c = convertToOGV
+		c = convertFramesToOGV
 	case "png":
 		c = convertToFrame
 	default:
@@ -203,12 +203,6 @@ func transcodeHandler(w http.ResponseWriter, r *http.Request) error {
 		defer func() {
 			concurrencyLimit <- true
 		}()
-	}
-
-	err = extractGif(dir)
-
-	if err != nil {
-		return err
 	}
 
 	vidFname, err := conv(dir)
